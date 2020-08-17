@@ -5,6 +5,7 @@ import com.calendar.data.enums.EntryPhase;
 import com.calendar.data.enums.EntryType;
 import com.calendar.domain.Entry;
 import com.calendar.domain.User;
+import com.calendar.exceptions.ConstraintViolationException;
 import com.calendar.exceptions.EntryNotFoundException;
 import com.calendar.repository.EntryRepository;
 import com.calendar.repository.custom.CustomEntryRepository;
@@ -16,346 +17,373 @@ import com.calendar.service.EntryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class EntryServiceImpl implements EntryService {
 
-	private EntryRepository entryRepository;
-	private CustomEntryRepository customEntryRepository;
-	private UserServiceImpl userServiceImpl;
-	private EntryDao entryDao;
+    private EntryRepository entryRepository;
+    private CustomEntryRepository customEntryRepository;
+    private UserServiceImpl userServiceImpl;
+    private EntryDao entryDao;
 
-	@Autowired
-	public EntryServiceImpl(EntryRepository entryRepository, UserServiceImpl userServiceImpl,
-			CustomEntryRepository customEntryRepository, EntryDao entryDao, EntityManager em) {
-		this.entryRepository = entryRepository;
-		this.userServiceImpl = userServiceImpl;
-		this.customEntryRepository = customEntryRepository;
-		this.entryDao = entryDao;
-	}
+    @Autowired
+    public EntryServiceImpl(EntryRepository entryRepository, UserServiceImpl userServiceImpl,
+                            CustomEntryRepository customEntryRepository, EntryDao entryDao, EntityManager em) {
+        this.entryRepository = entryRepository;
+        this.userServiceImpl = userServiceImpl;
+        this.customEntryRepository = customEntryRepository;
+        this.entryDao = entryDao;
+    }
 
-	@Override
-	@Transactional
-	public ProjectViewResponseDto createProject(ProjectDto projectDto) {
-		User user = userServiceImpl.getFullUser();
+    @Override
+    @Transactional
+    public ProjectViewResponseDto createProject(ProjectDto projectDto) {
+        User user = userServiceImpl.getFullUser();
 
-		Entry entry = new Entry(projectDto.getTitle(), projectDto.getDescription(), null, null,
-				projectDto.getTermin(),
-				EntryType.NONRELEVANT, EntryPhase.NONRELEVANT);
+        Entry entry = new Entry(projectDto.getTitle(), projectDto.getDescription(), null, null,
+                projectDto.getTermin(),
+                EntryType.NONRELEVANT, EntryPhase.NONRELEVANT);
 
-		entry.setUserId(user.getId());
+        entry.setUserId(user.getId());
 
-		Integer numberOfProjects = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false)
-				.size();
-		entry.setSortNumber((numberOfProjects != null) ?  numberOfProjects : 0);
+        Integer numberOfProjects = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false)
+                .size();
+        entry.setSortNumber((numberOfProjects != null) ? numberOfProjects : 0);
 
-		entryRepository.save(entry);
+        entryRepository.save(entry);
 
-		//Need to create the response object here in order to avoid the recursive query() --> getProjectIdOfEntry
-		return new ProjectViewResponseDto(getFullProjectById(entry.getId()), getProjects(user.isOnlyActiveProjects()));
-	}
+        //Need to create the response object here in order to avoid the recursive query() --> getProjectIdOfEntry
+        return new ProjectViewResponseDto(getFullProjectById(entry.getId()), getProjects(user.isOnlyActiveProjects()));
+    }
 
-	@Override
-	@Transactional
-	public ProjectViewResponseDto createEntry(EntryDto entryDto) {
-		User user = userServiceImpl.getFullUser();
+    @Override
+    @Transactional
+    public ProjectViewResponseDto createEntry(EntryDto entryDto) {
+        User user = userServiceImpl.getFullUser();
 
-		EntryType entryType;
-		EntryPhase entryPhase;
+        EntryType entryType;
+        EntryPhase entryPhase;
 
-		if (entryDto.getEntryType() != null) {
-			entryType = EntryType.valueOf(entryDto.getEntryType());
-		} else {
-			entryType = EntryType.NONRELEVANT;
-		}
-		if(entryDto.getEntryPhase() != null) {
-			entryPhase = EntryPhase.valueOf(entryDto.getEntryPhase());
-		} else {
-			entryPhase = EntryPhase.NONRELEVANT;
-		}
+        if (entryDto.getEntryType() != null) {
+            entryType = EntryType.valueOf(entryDto.getEntryType());
+        } else {
+            entryType = EntryType.NONRELEVANT;
+        }
+        if (entryDto.getEntryPhase() != null) {
+            entryPhase = EntryPhase.valueOf(entryDto.getEntryPhase());
+        } else {
+            entryPhase = EntryPhase.NONRELEVANT;
+        }
 
-		Entry entry = new Entry(
-				entryDto.getTitle(),
-				entryDto.getDescription(),
-				entryDto.getDate(),
-				entryDto.getDuration(),
-				entryDto.getTermin(),
-				entryType,
-				entryPhase);
+        Entry entry = new Entry(
+                entryDto.getTitle(),
+                entryDto.getDescription(),
+                entryDto.getDate(),
+                entryDto.getDuration(),
+                entryDto.getTermin(),
+                entryType,
+                entryPhase);
 
-		entry.setUserId(user.getId());
-		entry.addEntryConnection(entryRepository.getOne(entryDto.getAddedEntryId()));
-		entry.setChild(true);
+        entry.setUserId(user.getId());
+        entry.addEntryConnection(entryRepository.getOne(entryDto.getAddedEntryId()));
+        entry.setChild(true);
 
-		Integer numberOfEntriesOnThisLevel = entryRepository.findById(entryDto.getAddedEntryId())
-				.get().getAddEntry().size();
-		entry.setSortNumber((numberOfEntriesOnThisLevel != null) ?  numberOfEntriesOnThisLevel : 0);
+        Integer numberOfEntriesOnThisLevel = entryRepository.findById(entryDto.getAddedEntryId())
+                .get().getAddEntry().size();
+        entry.setSortNumber((numberOfEntriesOnThisLevel != null) ? numberOfEntriesOnThisLevel : 0);
 
-		entryRepository.save(entry);
+        entryRepository.save(entry);
 
 		/* Need to manually add the currently created entry to it's parent's children, otherwise it would not be
 		visible in the response. --> Recursive query
 		*/
-		Entry parentOfEntry = entryRepository.findById(entry.getEntryConnections().getId()).get();
-		parentOfEntry.getAddEntry().add(entry);
+        Entry parentOfEntry = entryRepository.findById(entry.getEntryConnections().getId()).get();
+        parentOfEntry.getAddEntry().add(entry);
 
-		return getProjectView(parentOfEntry.getId());
-	}
+        return getProjectView(parentOfEntry.getId());
+    }
 
-	@Override
-	public EntryListResponseDto getEntries() {
-		EntryListResponseDto entryResponseDto = new EntryListResponseDto();
+    @Override
+    public EntryListResponseDto getEntries() {
+        EntryListResponseDto entryResponseDto = new EntryListResponseDto();
 
-		User user = userServiceImpl.getFullUser();
-		List<Entry> entryList = new ArrayList<Entry>();
-		entryList = customEntryRepository.getOrderedEntriesByUserId(user.getId());
-		entryResponseDto.setEntryList(entryList);
+        User user = userServiceImpl.getFullUser();
+        List<Entry> entryList = new ArrayList<Entry>();
+        entryList = customEntryRepository.getOrderedEntriesByUserId(user.getId());
+        entryResponseDto.setEntryList(entryList);
 
-		return entryResponseDto;
-	}
+        return entryResponseDto;
+    }
 
-	@Override
-	public ArrayList<ProjectEntriesResponseDto> getProjects(boolean openOnly) {
-		User user = userServiceImpl.getFullUser();
-		List<Entry> entryList = new ArrayList<Entry>();
+    @Override
+    public ArrayList<ProjectEntriesResponseDto> getProjects(boolean openOnly) {
+        User user = userServiceImpl.getFullUser();
+        List<Entry> entryList = new ArrayList<Entry>();
 
-		if(openOnly) {
-			entryList = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false);
-		} else {
-			entryList = customEntryRepository.getEntriesByUserId(user.getId());
-		}
+        if (openOnly) {
+            entryList = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false);
+        } else {
+            entryList = customEntryRepository.getEntriesByUserId(user.getId());
+        }
 
-		ArrayList<ProjectEntriesResponseDto> perDtoList = new ArrayList<ProjectEntriesResponseDto>();
-		for (int i = 0; i < entryList.size(); i++) {
-			Entry entry = entryList.get(i);
-			ProjectEntriesResponseDto perDto = new ProjectEntriesResponseDto(entry.getId(), entry.getTitle(),
-					entry.isClosed(), entry.getSortNumber());
-			perDtoList.add(perDto);
-		}
+        ArrayList<ProjectEntriesResponseDto> perDtoList = new ArrayList<ProjectEntriesResponseDto>();
+        for (int i = 0; i < entryList.size(); i++) {
+            Entry entry = entryList.get(i);
+            ProjectEntriesResponseDto perDto = new ProjectEntriesResponseDto(entry.getId(), entry.getTitle(),
+                    entry.isClosed(), entry.getSortNumber());
+            perDtoList.add(perDto);
+        }
 
-		return perDtoList;
-	}
+        return perDtoList;
+    }
 
-	@Override
-	public FullProjectResponseDto getFullProjectById(int id) {
-		Optional<Entry> entry = entryRepository.findById(id);
-		Entry e = entry.get();
+    @Override
+    public FullProjectResponseDto getFullProjectById(int id) {
+        Optional<Entry> entry = entryRepository.findById(id);
+        Entry e = entry.get();
 
-		checkUserToEntry(e);
+        checkUserToEntry(e);
 
-		return new FullProjectResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(), e.getDate(),
-				e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(), e.isClosed(),
-				e.isDeleted(), e.getSortNumber(), e.isExpanded(), e.getAddEntry());
-	}
+        return new FullProjectResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(), e.getDate(),
+                e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(), e.isClosed(),
+                e.isDeleted(), e.getSortNumber(), e.isExpanded(), e.getAddEntry());
+    }
 
-	@Override
-	public ProjectViewResponseDto getProjectView(Integer id) {
-		User user = userServiceImpl.getFullUser();
+    @Override
+    public ProjectViewResponseDto getProjectView(Integer id) {
+        User user = userServiceImpl.getFullUser();
 
-		if(id != null) {
-			return new ProjectViewResponseDto(getFullProjectById(getProjectIdOfEntry(id)),
-					getProjects(user.isOnlyActiveProjects()));
-		} else {
-			return new ProjectViewResponseDto(null, getProjects(user.isOnlyActiveProjects()));
-		}
-	}
+        if (id != null) {
+            return new ProjectViewResponseDto(getFullProjectById(getProjectIdOfEntry(id)),
+                    getProjects(user.isOnlyActiveProjects()));
+        } else {
+            return new ProjectViewResponseDto(null, getProjects(user.isOnlyActiveProjects()));
+        }
+    }
 
-	public ProjectViewResponseForModificationDto getProjectViewWithChildrenClosedStatus(Integer id,
-																						boolean hasOpenChildren,
-																						Boolean allSiblingsAreClosed) {
-		User user = userServiceImpl.getFullUser();
+    public ProjectViewResponseForModificationDto getProjectViewWithChildrenClosedStatus(Integer id,
+                                                                                        boolean hasOpenChildren,
+                                                                                        Boolean allSiblingsAreClosed) {
+        User user = userServiceImpl.getFullUser();
 
-		if(id != null) {
-			if (hasOpenChildren) {
-				return new ProjectViewResponseForModificationDto(null, null,
-						true, allSiblingsAreClosed);
-			} else {
-				return new ProjectViewResponseForModificationDto(getFullProjectById(getProjectIdOfEntry(id)),
-						getProjects(user.isOnlyActiveProjects()), null, allSiblingsAreClosed);
-			}
-		} else {
-			return new ProjectViewResponseForModificationDto(null,
-					getProjects(user.isOnlyActiveProjects()), null, allSiblingsAreClosed);
-		}
+        if (id != null) {
+            if (hasOpenChildren) {
+                return new ProjectViewResponseForModificationDto(null, null,
+                        true, allSiblingsAreClosed);
+            } else {
+                return new ProjectViewResponseForModificationDto(getFullProjectById(getProjectIdOfEntry(id)),
+                        getProjects(user.isOnlyActiveProjects()), null, allSiblingsAreClosed);
+            }
+        } else {
+            return new ProjectViewResponseForModificationDto(null,
+                    getProjects(user.isOnlyActiveProjects()), null, allSiblingsAreClosed);
+        }
 
-	}
+    }
 
-	@Override
-	public EntryResponseDto getEntryById(int id) {
-		Optional<Entry> entry = entryRepository.findById(id);
-		Entry e = entry.get();
+    @Override
+    public EntryResponseDto getEntryById(int id) {
+        Optional<Entry> entry = entryRepository.findById(id);
+        Entry e = entry.get();
 
-		EntryResponseDto erDto;
+        EntryResponseDto erDto;
 
-		try {
-			erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
-					e.getDate(), e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
-					e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), e.getEntryConnections().getId());
-		} catch (NullPointerException ex) {
-			erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
-					e.getDate(), e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
-					e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), null);
-		}
+        try {
+            erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
+                    e.getDate(), e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
+                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), e.getEntryConnections().getId());
+        } catch (NullPointerException ex) {
+            erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
+                    e.getDate(), e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
+                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), null);
+        }
 
-		User user = userServiceImpl.getFullUser();
-		if(user.getId() != erDto.getUserId()) {
-			throw new AccessDeniedException("Access denied");
-		}
+        User user = userServiceImpl.getFullUser();
+        if (user.getId() != erDto.getUserId()) {
+            throw new AccessDeniedException("Access denied");
+        }
 
-		return erDto;
-	}
+        return erDto;
+    }
 
-	@Override
-	@Transactional
-	public ProjectViewResponseDto deleteEntryById(int id) {
-		Optional<Entry> entry = entryRepository.findById(id);
-		Entry e = entry.get();
+    @Override
+    @Transactional
+    public ProjectViewResponseDto deleteEntryById(int id) {
+        Optional<Entry> entry = entryRepository.findById(id);
+        Entry e = entry.get();
 
-		checkUserToEntry(e);
+        checkUserToEntry(e);
 
-		customEntryRepository.removeEntry(e);
+        customEntryRepository.removeEntry(e);
 
-		try {
-			int parentId = e.getEntryConnections().getId();
-			return getProjectView(parentId);
+        try {
+            int parentId = e.getEntryConnections().getId();
+            return getProjectView(parentId);
 
-		} catch(NullPointerException exception) {
-			return getProjectView(null);
-		}
+        } catch (NullPointerException exception) {
+            return getProjectView(null);
+        }
 
-	}
+    }
 
-	@Transactional
-	public ProjectViewResponseForModificationDto modifyEntry(Entry entry, EntryForModificationDto eDto,
-															 boolean checkIfAllChildrenAreClosed,
-															 Boolean areAllSiblingsClosed) {
-		entry.setTitle(eDto.getTitle());
+    @Transactional
+    public ProjectViewResponseForModificationDto modifyEntry(Entry entry, EntryForModificationDto eDto,
+                                                             boolean checkIfAllChildrenAreClosed,
+                                                             Boolean areAllSiblingsClosed) {
+        if (eDto.getTitle() != null) {
+            if (eDto.getTitle().equals(Optional.empty())) {
+                throw new ConstraintViolationException("Title can't be null!");
+            } else {
+                entry.setTitle(eDto.getTitle().get());
+            }
+        }
 
-		if(eDto.getDescription() != null) {
-			entry.setDescription(eDto.getDescription());
-		}
+        if (eDto.getDescription() != null) {
+            if (eDto.getDescription().equals(Optional.empty())) {
+                entry.setDescription(null);
+            } else {
+                entry.setDescription(eDto.getDescription().get());
+            }
+        }
 
-		if(eDto.getDate() != null) {
-			entry.setDate(eDto.getDate());
-		}
+        if (eDto.getDate() != null) {
+            if (eDto.getDate().equals(Optional.empty())) {
+                entry.setDate(null);
+            } else {
+                entry.setDate(eDto.getDate().orElse(entry.getDate()));
+            }
+        }
 
-		if(eDto.getDuration() != null) {
-			entry.setDuration(eDto.getDuration());
-		}
+        if (eDto.getDuration() != null) {
+            if (eDto.getDuration().equals(Optional.empty())) {
+                entry.setDuration(null);
+            } else {
+                entry.setDuration(eDto.getDuration().get());
+            }
 
-		if(eDto.getTermin() != null) {
-			entry.setTermin(eDto.getTermin());
-		}
+        }
 
-		if(eDto.getEntryPhase() != null) {
-			entry.setEntryPhase(EntryPhase.valueOf(eDto.getEntryPhase()));
-		}
+        if (eDto.getTermin() != null) {
+            if (eDto.getTermin().equals(Optional.empty())) {
+                entry.setTermin(null);
+            } else {
+                entry.setTermin(eDto.getTermin().get());
+            }
+        }
 
-		if(eDto.getEntryType() != null) {
-			entry.setEntryType(EntryType.valueOf(eDto.getEntryType()));
-		}
+        if (eDto.getEntryPhase() != null) {
+            entry.setEntryPhase(EntryPhase.valueOf(eDto.getEntryPhase().get()));
+        }
 
-		if(eDto.isClosed() != null) {
-			entry.setClosed(eDto.isClosed());
-		}
+        if (eDto.getEntryType() != null) {
+            entry.setEntryType(EntryType.valueOf(eDto.getEntryType().get()));
+        }
 
-		entryRepository.save(entry);
+        if (eDto.getClosed() != null) {
+            entry.setClosed(eDto.getClosed().get());
+        }
 
-		return getProjectViewWithChildrenClosedStatus(entry.getId(),checkIfAllChildrenAreClosed, areAllSiblingsClosed);
-	}
+        entryRepository.save(entry);
 
-	@Override
-	public ProjectViewResponseForModificationDto modifyEntryById(int id, EntryForModificationDto eDto,
-																 boolean checkIfAllChildrenAreClosed,
-																 boolean checkIfAllSiblingsAreClosed) {
-		Entry entry = entryRepository.findById(id).get();
+        return getProjectViewWithChildrenClosedStatus(entry.getId(), checkIfAllChildrenAreClosed, areAllSiblingsClosed);
+    }
 
-		checkUserToEntry(entry);
+    @Override
+    public ProjectViewResponseForModificationDto modifyEntryById(int id, EntryForModificationDto eDto,
+                                                                 boolean checkIfAllChildrenAreClosed,
+                                                                 boolean checkIfAllSiblingsAreClosed) {
+        Entry entry = entryRepository.findById(id).get();
 
-		Boolean areAllSiblingsClosed = null;
+        checkUserToEntry(entry);
 
-		if (checkIfAllSiblingsAreClosed) {
-			areAllSiblingsClosed = areAllSiblingEntriesClosed(entry);
-		}
+        Boolean areAllSiblingsClosed = null;
 
-		if (!checkIfAllChildrenAreClosed) {
-			return modifyEntry(entry, eDto, false, areAllSiblingsClosed);
-		} else {
-			if (hasOpenChildren(id)) {
-				return getProjectViewWithChildrenClosedStatus(id,true, areAllSiblingsClosed);
-			} else {
-				return modifyEntry(entry, eDto, false, areAllSiblingsClosed);
-			}
-		}
-	}
+        if (checkIfAllSiblingsAreClosed) {
+            areAllSiblingsClosed = areAllSiblingEntriesClosed(entry);
+        }
 
-	@Override
-	@Transactional
-	public ProjectViewResponseDto modifyProjectById(int id, ProjectDto projectDto) {
-		Entry project = entryRepository.findById(id).get();
+        if (!checkIfAllChildrenAreClosed) {
+            return modifyEntry(entry, eDto, false, areAllSiblingsClosed);
+        } else {
+            if (hasOpenChildren(id)) {
+                return getProjectViewWithChildrenClosedStatus(id, true, areAllSiblingsClosed);
+            } else {
+                return modifyEntry(entry, eDto, false, areAllSiblingsClosed);
+            }
+        }
+    }
 
-		checkUserToEntry(project);
+    @Override
+    @Transactional
+    public ProjectViewResponseDto modifyProjectById(int id, ProjectDto projectDto) {
+        Entry project = entryRepository.findById(id).get();
 
-		project.setTitle(projectDto.getTitle());
-		project.setDescription(projectDto.getDescription());
+        checkUserToEntry(project);
 
-		entryRepository.save(project);
+        project.setTitle(projectDto.getTitle());
+        project.setDescription(projectDto.getDescription());
 
-		return getProjectView(id);
-	}
+        entryRepository.save(project);
 
-	private void checkUserToEntry(Entry e) {
+        return getProjectView(id);
+    }
 
-		User user = userServiceImpl.getFullUser();
-		if(user.getId() != e.getUserId()) {
-			throw new AccessDeniedException("Access denied");
-		}
-	}
+    private void checkUserToEntry(Entry e) {
 
-	@Transactional
-	@Override
-	public void expandEntry(int id, boolean isExpanded) {
-		Entry entry;
+        User user = userServiceImpl.getFullUser();
+        if (user.getId() != e.getUserId()) {
+            throw new AccessDeniedException("Access denied");
+        }
+    }
 
-		try {
-			entry = entryRepository.findById(id).get();
-		} catch (NoSuchElementException e) {
-			throw new EntryNotFoundException("Entry doesn't exist!");
-		}
+    @Transactional
+    @Override
+    public void expandEntry(int id, boolean isExpanded) {
+        Entry entry;
 
-		checkUserToEntry(entry);
+        try {
+            entry = entryRepository.findById(id).get();
+        } catch (NoSuchElementException e) {
+            throw new EntryNotFoundException("Entry doesn't exist!");
+        }
 
-		entry.setExpanded(isExpanded);
+        checkUserToEntry(entry);
 
-		entryRepository.save(entry);
-	}
+        entry.setExpanded(isExpanded);
 
-	private int getProjectIdOfEntry(int entryId) {
-		Entry entry = entryRepository.findById(entryId).get();
+        entryRepository.save(entry);
+    }
 
-		checkUserToEntry(entry);
+    private int getProjectIdOfEntry(int entryId) {
+        Entry entry = entryRepository.findById(entryId).get();
 
-		int parentId = entryDao.getProjectIdOfEntry(entryId);
+        checkUserToEntry(entry);
 
-		return parentId;
-	}
+        int parentId = entryDao.getProjectIdOfEntry(entryId);
+
+        return parentId;
+    }
 
     private boolean hasOpenChildren(int id) {
-	    Entry entry = entryRepository.findById(id).get();
+        Entry entry = entryRepository.findById(id).get();
 
         return entry.getAddEntry().stream().anyMatch(child -> !child.isClosed());
     }
 
     private boolean areAllSiblingEntriesClosed(Entry aEntry) {
-		try {
-			return aEntry.getEntryConnections().getAddEntry().stream()
-					.noneMatch(child -> !child.isClosed() && child.getId() != aEntry.getId());
-		} catch (NullPointerException e) {
-			return false;
-		}
-	}
+        try {
+            return aEntry.getEntryConnections().getAddEntry().stream()
+                    .noneMatch(child -> !child.isClosed() && child.getId() != aEntry.getId());
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
 
 }

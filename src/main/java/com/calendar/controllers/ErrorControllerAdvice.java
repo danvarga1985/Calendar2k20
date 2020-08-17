@@ -1,5 +1,6 @@
 package com.calendar.controllers;
 
+import com.calendar.exceptions.ConstraintViolationException;
 import com.calendar.exceptions.EntryNotFoundException;
 import com.calendar.exceptions.SQLError;
 import com.calendar.exceptions.UserNotLoggedInException;
@@ -29,6 +30,20 @@ public class ErrorControllerAdvice {
     public ResponseEntity<ApiError> handleGenericSqlError(SQLError ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ApiError(
                 HttpStatus.SERVICE_UNAVAILABLE.value(), HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(),
+                ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiError(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiError(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ex.getMessage()));
     }
 
