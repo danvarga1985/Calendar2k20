@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile({"heroku", "heroku-dev"})
+@Profile({"heroku"})
 public class PostgreSQLQuery extends SQLQuery {
 
     public PostgreSQLQuery() {

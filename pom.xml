@@ -126,22 +126,22 @@
 			</dependencies>
         </profile>
 
-		<profile>
-			<id>heroku-dev</id>
-			<activation>
-				<property>
-					<name>env.SPRING_PROFILES_ACTIVE</name>
-					<value>heroku-dev</value>
-				</property>
-			</activation>
-			<dependencies>
-				<dependency>
-					<groupId>org.postgresql</groupId>
-					<artifactId>postgresql</artifactId>
-					<version>42.2.12</version>
-				</dependency>
-			</dependencies>
-		</profile>
+<!--		<profile>-->
+<!--			<id>heroku-dev</id>-->
+<!--			<activation>-->
+<!--				<property>-->
+<!--					<name>env.SPRING_PROFILES_ACTIVE</name>-->
+<!--					<value>heroku-dev</value>-->
+<!--				</property>-->
+<!--			</activation>-->
+<!--			<dependencies>-->
+<!--				<dependency>-->
+<!--					<groupId>org.postgresql</groupId>-->
+<!--					<artifactId>postgresql</artifactId>-->
+<!--					<version>42.2.12</version>-->
+<!--				</dependency>-->
+<!--			</dependencies>-->
+<!--		</profile>-->
     </profiles>
 
 	<build>
