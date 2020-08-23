@@ -48,19 +48,19 @@ public class EntryServiceImpl implements EntryService {
         User user = userServiceImpl.getFullUser();
 
         Entry entry = new Entry(projectDto.getTitle(), projectDto.getDescription(), null, null,
-                projectDto.getTermin(),
-                EntryType.NONRELEVANT, EntryPhase.NONRELEVANT);
+                projectDto.getDeadline(),
+                EntryType.PROJECT, EntryPhase.NONRELEVANT);
 
         entry.setUserId(user.getId());
 
-        Integer numberOfProjects = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false)
+        int numberOfProjects = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false)
                 .size();
-        entry.setSortNumber((numberOfProjects != null) ? numberOfProjects : 0);
+        entry.setSortNumber(numberOfProjects);
 
         entryRepository.save(entry);
 
         //Need to create the response object here in order to avoid the recursive query() --> getProjectIdOfEntry
-        return new ProjectViewResponseDto(getFullProjectById(entry.getId()), getProjects(user.isOnlyActiveProjects()));
+        return new ProjectViewResponseDto(getFullProjectById(entry.getId()), getProjects());
     }
 
     @Override
@@ -74,7 +74,7 @@ public class EntryServiceImpl implements EntryService {
         if (entryDto.getEntryType() != null) {
             entryType = EntryType.valueOf(entryDto.getEntryType());
         } else {
-            entryType = EntryType.NONRELEVANT;
+            entryType = EntryType.TASK;
         }
         if (entryDto.getEntryPhase() != null) {
             entryPhase = EntryPhase.valueOf(entryDto.getEntryPhase());
@@ -87,25 +87,25 @@ public class EntryServiceImpl implements EntryService {
                 entryDto.getDescription(),
                 entryDto.getDate(),
                 entryDto.getDuration(),
-                entryDto.getTermin(),
+                entryDto.getDeadline(),
                 entryType,
                 entryPhase);
 
         entry.setUserId(user.getId());
-        entry.addEntryConnection(entryRepository.getOne(entryDto.getAddedEntryId()));
+        entry.setParentEntry(entryRepository.getOne(entryDto.getParentId()));
         entry.setChild(true);
 
-        Integer numberOfEntriesOnThisLevel = entryRepository.findById(entryDto.getAddedEntryId())
-                .get().getAddEntry().size();
-        entry.setSortNumber((numberOfEntriesOnThisLevel != null) ? numberOfEntriesOnThisLevel : 0);
+        int numberOfEntriesOnThisLevel = entryRepository.findById(entryDto.getParentId())
+                .get().getChildEntries().size();
+        entry.setSortNumber(numberOfEntriesOnThisLevel);
 
         entryRepository.save(entry);
 
-		/* Need to manually add the currently created entry to it's parent's children, otherwise it would not be
+		/* Need to manually add the recently created entry to it's parent's children, otherwise it would not be
 		visible in the response. --> Recursive query
 		*/
-        Entry parentOfEntry = entryRepository.findById(entry.getEntryConnections().getId()).get();
-        parentOfEntry.getAddEntry().add(entry);
+        Entry parentOfEntry = entryRepository.findById(entry.getParentEntry().getId()).get();
+        parentOfEntry.getChildEntries().add(entry);
 
         return getProjectView(parentOfEntry.getId());
     }
@@ -123,11 +123,11 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
-    public ArrayList<ProjectEntriesResponseDto> getProjects(boolean openOnly) {
+    public ArrayList<ProjectEntriesResponseDto> getProjects() {
         User user = userServiceImpl.getFullUser();
         List<Entry> entryList = new ArrayList<Entry>();
 
-        if (openOnly) {
+        if (user.isOnlyActiveProjects()) {
             entryList = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false);
         } else {
             entryList = customEntryRepository.getEntriesByUserId(user.getId());
@@ -152,8 +152,8 @@ public class EntryServiceImpl implements EntryService {
         checkUserToEntry(e);
 
         return new FullProjectResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(), e.getDate(),
-                e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(), e.isClosed(),
-                e.isDeleted(), e.getSortNumber(), e.isExpanded(), e.getAddEntry());
+                e.getDuration(), e.getDeadline(), e.getEntryType(), e.getEntryPhase(), e.isChild(), e.isClosed(),
+                e.isDeleted(), e.getSortNumber(), e.isExpanded(), e.getChildEntries());
     }
 
     @Override
@@ -162,9 +162,9 @@ public class EntryServiceImpl implements EntryService {
 
         if (id != null) {
             return new ProjectViewResponseDto(getFullProjectById(getProjectIdOfEntry(id)),
-                    getProjects(user.isOnlyActiveProjects()));
+                    getProjects());
         } else {
-            return new ProjectViewResponseDto(null, getProjects(user.isOnlyActiveProjects()));
+            return new ProjectViewResponseDto(null, getProjects());
         }
     }
 
@@ -179,11 +179,11 @@ public class EntryServiceImpl implements EntryService {
                         true, allSiblingsAreClosed);
             } else {
                 return new ProjectViewResponseForModificationDto(getFullProjectById(getProjectIdOfEntry(id)),
-                        getProjects(user.isOnlyActiveProjects()), null, allSiblingsAreClosed);
+                        getProjects(), null, allSiblingsAreClosed);
             }
         } else {
             return new ProjectViewResponseForModificationDto(null,
-                    getProjects(user.isOnlyActiveProjects()), null, allSiblingsAreClosed);
+                    getProjects(), null, allSiblingsAreClosed);
         }
 
     }
@@ -197,11 +197,11 @@ public class EntryServiceImpl implements EntryService {
 
         try {
             erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
-                    e.getDate(), e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
-                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), e.getEntryConnections().getId());
+                    e.getDate(), e.getDuration(), e.getDeadline(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
+                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), e.getParentEntry().getId());
         } catch (NullPointerException ex) {
             erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
-                    e.getDate(), e.getDuration(), e.getTermin(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
+                    e.getDate(), e.getDuration(), e.getDeadline(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
                     e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), null);
         }
 
@@ -224,7 +224,7 @@ public class EntryServiceImpl implements EntryService {
         customEntryRepository.removeEntry(e);
 
         try {
-            int parentId = e.getEntryConnections().getId();
+            int parentId = e.getParentEntry().getId();
             return getProjectView(parentId);
 
         } catch (NullPointerException exception) {
@@ -270,11 +270,11 @@ public class EntryServiceImpl implements EntryService {
 
         }
 
-        if (eDto.getTermin() != null) {
-            if (eDto.getTermin().equals(Optional.empty())) {
-                entry.setTermin(null);
+        if (eDto.getDeadline() != null) {
+            if (eDto.getDeadline().equals(Optional.empty())) {
+                entry.setDeadline(null);
             } else {
-                entry.setTermin(eDto.getTermin().get());
+                entry.setDeadline(eDto.getDeadline().get());
             }
         }
 
@@ -286,12 +286,12 @@ public class EntryServiceImpl implements EntryService {
             entry.setEntryType(EntryType.valueOf(eDto.getEntryType().get()));
         }
 
-        if (eDto.getClosed() != null) {
-            entry.setClosed(eDto.getClosed().get());
+        if (eDto.isClosed() != null) {
+            entry.setClosed(eDto.isClosed().get());
         }
 
-        if (eDto.getExpanded() != null) {
-            entry.setExpanded(eDto.getExpanded().get());
+        if (eDto.isExpanded() != null) {
+            entry.setExpanded(eDto.isExpanded().get());
         }
 
         entryRepository.save(entry);
@@ -378,12 +378,12 @@ public class EntryServiceImpl implements EntryService {
     private boolean hasOpenChildren(int id) {
         Entry entry = entryRepository.findById(id).get();
 
-        return entry.getAddEntry().stream().anyMatch(child -> !child.isClosed());
+        return entry.getChildEntries().stream().anyMatch(child -> !child.isClosed());
     }
 
     private boolean areAllSiblingEntriesClosed(Entry aEntry) {
         try {
-            return aEntry.getEntryConnections().getAddEntry().stream()
+            return aEntry.getParentEntry().getChildEntries().stream()
                     .noneMatch(child -> !child.isClosed() && child.getId() != aEntry.getId());
         } catch (NullPointerException e) {
             return false;

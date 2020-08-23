@@ -19,7 +19,7 @@ public class EntryForModificationDto {
     private Optional<LocalDateTime> duration;
 
     @JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
-    private Optional<LocalDateTime> termin;
+    private Optional<LocalDateTime> deadline;
 
     private Optional<String> entryType;
 
@@ -34,13 +34,13 @@ public class EntryForModificationDto {
     }
 
     public EntryForModificationDto(Optional<String> title, Optional<String> description, Optional<LocalDateTime> date,
-								   Optional<LocalDateTime> duration, Optional<LocalDateTime> termin,
+								   Optional<LocalDateTime> duration, Optional<LocalDateTime> deadline,
 								   Optional<String> entryType, Optional<String> entryPhase, Optional<Boolean> closed, Optional<Boolean> expanded) {
         this.title = title;
         this.description = description;
         this.date = date;
         this.duration = duration;
-        this.termin = termin;
+        this.deadline = deadline;
         this.entryType = entryType;
         this.entryPhase = entryPhase;
         this.closed = closed;
@@ -79,12 +79,12 @@ public class EntryForModificationDto {
 		this.duration = duration;
 	}
 
-	public Optional<LocalDateTime> getTermin() {
-		return termin;
+	public Optional<LocalDateTime> getDeadline() {
+		return deadline;
 	}
 
-	public void setTermin(Optional<LocalDateTime> termin) {
-		this.termin = termin;
+	public void setDeadline(Optional<LocalDateTime> deadline) {
+		this.deadline = deadline;
 	}
 
 	public Optional<String> getEntryType() {
@@ -103,7 +103,7 @@ public class EntryForModificationDto {
 		this.entryPhase = entryPhase;
 	}
 
-	public Optional<Boolean> getClosed() {
+	public Optional<Boolean> isClosed() {
 		return closed;
 	}
 
@@ -111,7 +111,7 @@ public class EntryForModificationDto {
 		this.closed = closed;
 	}
 
-	public Optional<Boolean> getExpanded() {
+	public Optional<Boolean> isExpanded() {
 		return expanded;
 	}
 

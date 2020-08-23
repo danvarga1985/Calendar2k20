@@ -25,7 +25,7 @@ public class EntryResponseDto {
 	private LocalDateTime duration;
 
 	@JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
-	private LocalDateTime termin;
+	private LocalDateTime deadline;
 
 	@Enumerated(EnumType.STRING)
 	private EntryType entryType;
@@ -33,52 +33,52 @@ public class EntryResponseDto {
 	@Enumerated(EnumType.STRING)
 	private EntryPhase entryPhase;
 	
-	private boolean isChild;
+	private boolean child;
 	
-	private boolean isClosed;
+	private boolean closed;
 	
 	private Integer sortNumber;
 	
-	private boolean isDeleted;
+	private boolean deleted;
 
-	private boolean isExpanded;
+	private boolean expanded;
 
 	private Integer parentId;
 	
 	public EntryResponseDto(int id, int userId, String title, String description, LocalDateTime date, LocalDateTime duration,
-							LocalDateTime termin, EntryType entryType, EntryPhase entryPhase, boolean isChild, boolean isClosed, Integer sortNumber,
-							boolean isDeleted, boolean isExpanded, Integer parentId) {
+							LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase, boolean child, boolean closed, Integer sortNumber,
+							boolean deleted, boolean expanded, Integer parentId) {
 		this.id = id;
 		this.userId = userId;
 		this.title = title;
 		this.description = description;
 		this.date = date;
 		this.duration = duration;
-		this.termin = termin;
+		this.deadline = deadline;
 		this.entryType = entryType;
 		this.entryPhase = entryPhase;
-		this.isChild = isChild;
-		this.isClosed = isClosed;
+		this.child = child;
+		this.closed = closed;
 		this.setSortNumber(sortNumber);
-		this.isDeleted = isDeleted;
-		this.isExpanded = isExpanded;
+		this.deleted = deleted;
+		this.expanded = expanded;
 		this.parentId = parentId;
 	}
 	
 	public boolean isDeleted() {
-		return isDeleted;
+		return deleted;
 	}
 
-	public void setDeleted(boolean isDeleted) {
-		this.isDeleted = isDeleted;
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	public boolean isExpanded() {
-		return isExpanded;
+		return expanded;
 	}
 
 	public void setExpanded(boolean isExpanded) {
-		this.isExpanded = isExpanded;
+		this.expanded = isExpanded;
 	}
 
 	public int getId() {
@@ -129,12 +129,12 @@ public class EntryResponseDto {
 		this.duration = duration;
 	}
 
-	public LocalDateTime getTermin() {
-		return termin;
+	public LocalDateTime getDeadline() {
+		return deadline;
 	}
 
-	public void setTermin(LocalDateTime termin) {
-		this.termin = termin;
+	public void setDeadline(LocalDateTime deadline) {
+		this.deadline = deadline;
 	}
 
 	public EntryType getEntryType() {
@@ -154,19 +154,19 @@ public class EntryResponseDto {
 	}
 
 	public boolean isChild() {
-		return isChild;
+		return child;
 	}
 
-	public void setChild(boolean isChild) {
-		this.isChild = isChild;
+	public void setChild(boolean child) {
+		this.child = child;
 	}
 
 	public boolean isClosed() {
-		return isClosed;
+		return closed;
 	}
 
-	public void setClosed(boolean isClosed) {
-		this.isClosed = isClosed;
+	public void setClosed(boolean closed) {
+		this.closed = closed;
 	}
 
 	public Integer getSortNumber() {

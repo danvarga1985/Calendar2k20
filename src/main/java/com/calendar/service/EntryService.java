@@ -1,10 +1,11 @@
 package com.calendar.service;
 
-import java.util.ArrayList;
 import com.calendar.requestdto.EntryDto;
 import com.calendar.requestdto.EntryForModificationDto;
 import com.calendar.requestdto.ProjectDto;
 import com.calendar.responsedto.*;
+
+import java.util.ArrayList;
 
 public interface EntryService {
 
@@ -12,7 +13,7 @@ public interface EntryService {
 	
 	ProjectViewResponseDto createProject(ProjectDto projectDto);
 	
-	ArrayList<ProjectEntriesResponseDto> getProjects(boolean isClosed);
+	ArrayList<ProjectEntriesResponseDto> getProjects();
 	
 	EntryListResponseDto getEntries();
 	

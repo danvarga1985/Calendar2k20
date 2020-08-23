@@ -1,14 +1,14 @@
 package com.calendar.requestdto;
 
-import java.time.LocalDateTime;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sun.istack.NotNull;
+
+import java.time.LocalDateTime;
 
 public class EntryDto {
 
 	@NotNull
-	private Integer addedEntryId;
+	private Integer parentId;
 
 	@NotNull
 	private String title;
@@ -22,7 +22,7 @@ public class EntryDto {
 	private LocalDateTime duration;
 
 	@JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
-	private LocalDateTime termin;
+	private LocalDateTime deadline;
 
 	private String entryType;
 
@@ -32,24 +32,24 @@ public class EntryDto {
 		
 	}
 
-	public EntryDto(Integer addedEntryId, String title, String description, LocalDateTime date, LocalDateTime duration, LocalDateTime termin,
-			String entryType, String entryPhase) {
-		this.addedEntryId = addedEntryId;
+	public EntryDto(Integer parentId, String title, String description, LocalDateTime date, LocalDateTime duration, LocalDateTime deadline,
+					String entryType, String entryPhase) {
+		this.parentId = parentId;
 		this.title = title;
 		this.description = description;
 		this.date = date;
 		this.duration = duration;
-		this.termin = termin;
+		this.deadline = deadline;
 		this.entryType = entryType;
 		this.entryPhase = entryPhase;
 	}
 
-	public Integer getAddedEntryId() {
-		return addedEntryId;
+	public Integer getParentId() {
+		return parentId;
 	}
 
-	public void setAddedEntryId(int addedEntryId) {
-		this.addedEntryId = addedEntryId;
+	public void setParentId(int parentId) {
+		this.parentId = parentId;
 	}
 
 	public String getTitle() {
@@ -84,12 +84,12 @@ public class EntryDto {
 		this.duration = duration;
 	}
 
-	public LocalDateTime getTermin() {
-		return termin;
+	public LocalDateTime getDeadline() {
+		return deadline;
 	}
 
-	public void setTermin(LocalDateTime termin) {
-		this.termin = termin;
+	public void setDeadline(LocalDateTime deadline) {
+		this.deadline = deadline;
 	}
 
 	public String getEntryType() {

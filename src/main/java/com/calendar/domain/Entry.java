@@ -31,7 +31,7 @@ public class Entry {
 	private LocalDateTime duration;
 
 	@JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
-	private LocalDateTime termin;
+	private LocalDateTime deadline;
 
 	@Enumerated(EnumType.STRING)
 	private EntryType entryType;
@@ -39,67 +39,63 @@ public class Entry {
 	@Enumerated(EnumType.STRING)
 	private EntryPhase entryPhase;
 	
-	private boolean isChild;
+	private boolean child;
 
-	private boolean isClosed;
+	private boolean closed;
 	
-	private boolean isDeleted;
+	private boolean deleted;
 	
 	private Integer sortNumber;
 
-	private boolean isExpanded;
-	
+	private boolean expanded;
+
 	@JsonBackReference
 	@JoinColumn(name="entry_id")
 	@ManyToOne
-	private Entry entryConnections;
+	private Entry parentEntry;
 
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@OrderBy("sortNumber ASC")
-	@OneToMany(mappedBy = "entryConnections", cascade = CascadeType.REMOVE)
-	private Set<Entry> addEntry;
+	@OneToMany(mappedBy = "parentEntry", cascade = CascadeType.REMOVE)
+	private Set<Entry> childEntries;
 	
 	public Entry() {
 		
 	}
 
-	public Entry(String title, String description, LocalDateTime date, LocalDateTime duration, 
-			LocalDateTime termin, EntryType entryType, EntryPhase entryPhase) {
-		this.addEntry = new HashSet<Entry>();
+	public Entry(String title, String description, LocalDateTime date, LocalDateTime duration,
+				 LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase) {
+		this.childEntries = new HashSet<Entry>();
 		
 		this.title = title;
 		this.description = description;
 		this.date = date;
 		this.duration = duration;
-		this.termin = termin;
+		this.deadline = deadline;
 		this.entryType = entryType;
 		this.entryPhase = entryPhase;
-		this.isChild = false;
-		this.isClosed = false;
-		this.isDeleted = false;
-		this.isExpanded = true;
+		this.child = false;
+		this.closed = false;
+		this.deleted = false;
+		this.expanded = true;
 	}
 	
 	
 
-	public Entry getEntryConnections() {
-		return entryConnections;
-	}
-
-	public void setEntryConnections(Entry entryConnections) {
-		this.entryConnections = entryConnections;
+	public Entry getParentEntry() {
+		return parentEntry;
 	}
 	
-	public void addEntryConnection(Entry entryConnection) {
-		this.entryConnections = entryConnection;
+	public void setParentEntry(Entry parentEntry) {
+		this.parentEntry = parentEntry;
 	}
 
-	public Set<Entry> getAddEntry() {
-		return addEntry;
+	public Set<Entry> getChildEntries() {
+		return childEntries;
 	}
 
-	public void AddEntry(Set<Entry> addEntry) {
-		this.addEntry = addEntry;
+	public void setChildEntries(Set<Entry> childEntries) {
+		this.childEntries = childEntries;
 	}
 
 	public String getTitle() {
@@ -134,12 +130,12 @@ public class Entry {
 		this.duration = duration;
 	}
 
-	public LocalDateTime getTermin() {
-		return termin;
+	public LocalDateTime getDeadline() {
+		return deadline;
 	}
 
-	public void setTermin(LocalDateTime termin) {
-		this.termin = termin;
+	public void setDeadline(LocalDateTime deadline) {
+		this.deadline = deadline;
 	}
 
 	public EntryType getEntryType() {
@@ -174,27 +170,27 @@ public class Entry {
 	}
 
 	public boolean isChild() {
-		return isChild;
+		return child;
 	}
 
-	public void setChild(boolean isChild) {
-		this.isChild = isChild;
+	public void setChild(boolean child) {
+		this.child = child;
 	}
 
 	public boolean isClosed() {
-		return isClosed;
+		return closed;
 	}
 
-	public void setClosed(boolean isClosed) {
-		this.isClosed = isClosed;
+	public void setClosed(boolean closed) {
+		this.closed = closed;
 	}
 
 	public boolean isDeleted() {
-		return isDeleted;
+		return deleted;
 	}
 
-	public void setDeleted(boolean isDeleted) {
-		this.isDeleted = isDeleted;
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	public Integer getSortNumber() {
@@ -206,11 +202,11 @@ public class Entry {
 	}
 
 	public boolean isExpanded() {
-		return isExpanded;
+		return expanded;
 	}
 
 	public void setExpanded(boolean expanded) {
-		this.isExpanded = expanded;
+		this.expanded = expanded;
 	}
 
 

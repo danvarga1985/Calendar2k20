@@ -1,10 +1,9 @@
 package com.calendar.requestdto;
 
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import javax.validation.constraints.NotNull;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDateTime;
 
 public class ProjectDto {
 
@@ -14,16 +13,16 @@ public class ProjectDto {
 	private String description;
 	
 	@JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
-	private LocalDateTime termin;
+	private LocalDateTime deadline;
 	
 	public ProjectDto() {
 		
 	}
 
-	public ProjectDto(String title, String description, LocalDateTime termin) {
+	public ProjectDto(String title, String description, LocalDateTime deadline) {
 		this.title = title;
 		this.description = description;
-		this.termin = termin;
+		this.deadline = deadline;
 	}
 
 	public String getTitle() {
@@ -42,12 +41,12 @@ public class ProjectDto {
 		this.description = description;
 	}
 
-	public LocalDateTime getTermin() {
-		return termin;
+	public LocalDateTime getDeadline() {
+		return deadline;
 	}
 
-	public void setTermin(LocalDateTime termin) {
-		this.termin = termin;
+	public void setDeadline(LocalDateTime deadline) {
+		this.deadline = deadline;
 	}
 	
 }

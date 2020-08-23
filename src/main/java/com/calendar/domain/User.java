@@ -1,21 +1,11 @@
 package com.calendar.domain;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Collection;
 
 @Entity
 @Table(name = "tbl_user")
@@ -37,9 +27,9 @@ public class User implements UserDetails {
 
 	private String validateToken;
 
-	private boolean isValidated;
+	private boolean validated;
 
-	private boolean isDeleted;
+	private boolean deleted;
 
 	public User() {
 
@@ -53,8 +43,8 @@ public class User implements UserDetails {
 		this.registrationTime = LocalDateTime.now();
 		
 		this.onlyActiveProjects = false;
-		isValidated = false;
-		isDeleted = false;
+		validated = false;
+		deleted = false;
 	}
 	
 	public boolean isOnlyActiveProjects() {
@@ -66,11 +56,11 @@ public class User implements UserDetails {
 	}
 
 	public boolean isValidated() {
-		return isValidated;
+		return validated;
 	}
 
-	public void setValidated(boolean isValidated) {
-		this.isValidated = isValidated;
+	public void setValidated(boolean validated) {
+		this.validated = validated;
 	}
 
 	public int getId() {
@@ -90,7 +80,7 @@ public class User implements UserDetails {
 	}
 
 	public boolean isDeleted() {
-		return isDeleted;
+		return deleted;
 	}
 
 	public void setPassword(String password) {
@@ -109,22 +99,22 @@ public class User implements UserDetails {
 
 	@Override
 	public boolean isAccountNonExpired() {
-		return !isDeleted;
+		return !deleted;
 	}
 
 	@Override
 	public boolean isAccountNonLocked() {
-		return !isDeleted;
+		return !deleted;
 	}
 
 	@Override
 	public boolean isCredentialsNonExpired() {
-		return !isDeleted;
+		return !deleted;
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return !isDeleted;
+		return !deleted;
 	}
 	
 	@Override

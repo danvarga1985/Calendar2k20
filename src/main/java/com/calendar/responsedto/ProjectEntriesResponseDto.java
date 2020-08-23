@@ -6,14 +6,14 @@ public class ProjectEntriesResponseDto {
 	
 	private String title;
 	
-	private boolean isClosed;
+	private boolean closed;
 	
 	private Integer sortNumber;
 	
-	public ProjectEntriesResponseDto(int entryId, String title, boolean isClosed, Integer sortNumber) {
+	public ProjectEntriesResponseDto(int entryId, String title, boolean closed, Integer sortNumber) {
 		this.entryId = entryId;
 		this.title = title;
-		this.isClosed = isClosed;
+		this.closed = closed;
 		this.sortNumber = sortNumber;
 	}
 	
@@ -44,10 +44,10 @@ public class ProjectEntriesResponseDto {
 	}
 
 	public boolean isClosed() {
-		return isClosed;
+		return closed;
 	}
 
-	public void setClosed(boolean isClosed) {
-		this.isClosed = isClosed;
+	public void setClosed(boolean closed) {
+		this.closed = closed;
 	}
 }

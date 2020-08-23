@@ -6,7 +6,7 @@ public class UserResponseDto {
     
     private String email;
     
-    private boolean isValidated;
+    private boolean validated;
 
     private boolean onlyActiveProjects;
     
@@ -14,10 +14,10 @@ public class UserResponseDto {
     	
     }
 
-    public UserResponseDto(int id, String email, boolean isValidated, boolean onlyActiveProjects) {
+    public UserResponseDto(int id, String email, boolean validated, boolean onlyActiveProjects) {
         this.id = id;
         this.email = email;
-        this.isValidated = isValidated;
+        this.validated = validated;
         this.onlyActiveProjects = onlyActiveProjects;
     }
     
@@ -37,12 +37,12 @@ public class UserResponseDto {
         this.email = email;
     }
 
-    public boolean isIsValidated() {
-        return isValidated;
+    public boolean isValidated() {
+        return validated;
     }
 
-    public void setIsValidated(boolean isValidated) {
-        this.isValidated = isValidated;
+    public void setValidated(boolean validated) {
+        this.validated = validated;
     }
 
     public boolean isOnlyActiveProjects() {

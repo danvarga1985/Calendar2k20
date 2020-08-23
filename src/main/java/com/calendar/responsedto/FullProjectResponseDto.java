@@ -1,17 +1,16 @@
 package com.calendar.responsedto;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-
 import com.calendar.data.enums.EntryPhase;
 import com.calendar.data.enums.EntryType;
 import com.calendar.domain.Entry;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FullProjectResponseDto {
 
@@ -30,7 +29,7 @@ public class FullProjectResponseDto {
 	private LocalDateTime duration;
 
 	@JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
-	private LocalDateTime termin;
+	private LocalDateTime deadline;
 
 	@Enumerated(EnumType.STRING)
 	private EntryType entryType;
@@ -38,47 +37,47 @@ public class FullProjectResponseDto {
 	@Enumerated(EnumType.STRING)
 	private EntryPhase entryPhase;
 	
-	private boolean isChild;
+	private boolean child;
 	
-	private boolean isClosed;
+	private boolean closed;
 	
-	private boolean isDeleted;
+	private boolean deleted;
 	
 	private Integer sortNumber;
 
-	private boolean isExpanded;
+	private boolean expanded;
 
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	private Set<Entry> addEntry = new HashSet<Entry>();
+	private Set<Entry> childEntries = new HashSet<Entry>();
 	
 	public FullProjectResponseDto(
 			int id, int userId, String title, String description, LocalDateTime date, LocalDateTime duration,
-			LocalDateTime termin, EntryType entryType, EntryPhase entryPhase, boolean isChild, boolean isClosed,
-			boolean isDeleted, Integer sortNumber, boolean isExpanded, Set<Entry> addEntry) {
+			LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase, boolean child, boolean closed,
+			boolean deleted, Integer sortNumber, boolean expanded, Set<Entry> childEntries) {
 		this.id = id;
 		this.userId = userId;
 		this.title = title;
 		this.description = description;
 		this.date = date;
 		this.duration = duration;
-		this.termin = termin;
+		this.deadline = deadline;
 		this.entryType = entryType;
 		this.entryPhase = entryPhase;
-		this.isChild = isChild;
-		this.isClosed = isClosed;
-		this.isDeleted = isDeleted;
+		this.child = child;
+		this.closed = closed;
+		this.deleted = deleted;
 		this.sortNumber = sortNumber;
-		this.isExpanded = isExpanded;
-		this.addEntry = addEntry;
+		this.expanded = expanded;
+		this.childEntries = childEntries;
 	}
 	
 
 	public boolean isDeleted() {
-		return isDeleted;
+		return deleted;
 	}
 
-	public void setDeleted(boolean isDeleted) {
-		this.isDeleted = isDeleted;
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	public Integer getSortNumber() {
@@ -90,15 +89,15 @@ public class FullProjectResponseDto {
 	}
 
 	public boolean isExpanded() {
-		return isExpanded;
+		return expanded;
 	}
 
 	public void setExpanded(boolean isExpanded) {
-		this.isExpanded = isExpanded;
+		this.expanded = isExpanded;
 	}
 
-	public void setAddEntry(Set<Entry> addEntry) {
-		this.addEntry = addEntry;
+	public void setChildEntries(Set<Entry> childEntries) {
+		this.childEntries = childEntries;
 	}
 
 	public int getId() {
@@ -149,12 +148,12 @@ public class FullProjectResponseDto {
 		this.duration = duration;
 	}
 
-	public LocalDateTime getTermin() {
-		return termin;
+	public LocalDateTime getDeadline() {
+		return deadline;
 	}
 
-	public void setTermin(LocalDateTime termin) {
-		this.termin = termin;
+	public void setDeadline(LocalDateTime deadline) {
+		this.deadline = deadline;
 	}
 
 	public EntryType getEntryType() {
@@ -174,27 +173,23 @@ public class FullProjectResponseDto {
 	}
 
 	public boolean isChild() {
-		return isChild;
+		return child;
 	}
 
-	public void setChild(boolean isChild) {
-		this.isChild = isChild;
+	public void setChild(boolean child) {
+		this.child = child;
 	}
 
 	public boolean isClosed() {
-		return isClosed;
+		return closed;
 	}
 
-	public void setClosed(boolean isClosed) {
-		this.isClosed = isClosed;
+	public void setClosed(boolean closed) {
+		this.closed = closed;
 	}
 	
-	public Set<Entry> getAddEntry() {
-		return addEntry;
-	}
-
-	public void AddEntry(Set<Entry> addEntry) {
-		this.addEntry = addEntry;
+	public Set<Entry> getChildEntries() {
+		return childEntries;
 	}
 	
 }

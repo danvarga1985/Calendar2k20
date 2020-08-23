@@ -1,10 +1,8 @@
 package com.calendar.repository.custom.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.calendar.domain.Entry;
+import com.calendar.repository.custom.CustomEntryRepository;
+import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -13,11 +11,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
-
-import org.springframework.stereotype.Repository;
-
-import com.calendar.domain.Entry;
-import com.calendar.repository.custom.CustomEntryRepository;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 public class CustomEntryRepositoryImpl implements CustomEntryRepository{
@@ -28,7 +25,7 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository{
 	@Override
 	public List<Entry> getEntriesByUserId(int userId) {
 		return em
-				.createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.isChild = :isC", Entry.class)
+				.createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.child = :isC", Entry.class)
 				.setParameter("id", userId)
 				.setParameter("isC", false)
 				.getResultStream().sorted(new Comparator<Entry>() {
@@ -40,13 +37,13 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository{
 	}
 	
 	@Override
-	public List<Entry> getProjectsByUserIdAndStatus(int userId, boolean isClosed) {
+	public List<Entry> getProjectsByUserIdAndStatus(int userId, boolean closed) {
 		return em
-				.createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.isChild = :isC " +
-						"AND e.isClosed = :isCl", Entry.class)
+				.createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.child = :isC " +
+						"AND e.closed = :isCl", Entry.class)
 				.setParameter("id", userId)
 				.setParameter("isC", false)
-				.setParameter("isCl", isClosed)
+				.setParameter("isCl", closed)
 				.getResultStream().sorted(new Comparator<Entry>() {
 					@Override
 					public int compare(Entry e1, Entry e2) {
@@ -69,7 +66,7 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository{
 		Root<Entry> e = cq.from(Entry.class);
 		
 		cq
-			.where(cb.equal(e.get("userId"), userId), cb.equal(e.get("isChild"), false));
+			.where(cb.equal(e.get("userId"), userId), cb.equal(e.get("child"), false));
 		
 		List<Order> orderList = new ArrayList();
 		orderList.add(cb.asc(e.get("sortNumber")));
