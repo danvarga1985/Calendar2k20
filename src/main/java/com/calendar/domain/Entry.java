@@ -2,7 +2,10 @@ package com.calendar.domain;
 
 import com.calendar.data.enums.EntryPhase;
 import com.calendar.data.enums.EntryType;
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -167,6 +168,7 @@ public class EntryServiceImpl implements EntryService {
             return new ProjectViewResponseDto(null, getProjects());
         }
     }
+
 
     public ProjectViewResponseForModificationDto getProjectViewWithChildrenClosedStatus(Integer id,
                                                                                         boolean hasOpenChildren,
@@ -366,6 +368,23 @@ public class EntryServiceImpl implements EntryService {
         entryRepository.save(entry);
     }
 
+    @Override
+    public List<SortedEntryDto> getSortedEntries(LocalDateTime startDate, LocalDateTime endDate) {
+        //TODO: impl
+        int userId = userServiceImpl.getFullUser().getId();
+
+        List<Entry> sortedEntries = customEntryRepository.getSortedEntries(userId, startDate, endDate);
+
+        List<SortedEntryDto> resultlist = new ArrayList<>();
+
+        for (Entry e :
+                sortedEntries) {
+            resultlist.add(convertEntryToSortedEntryDto(e));
+        }
+
+        return resultlist;
+    }
+
     private int getProjectIdOfEntry(int entryId) {
         Entry entry = entryRepository.findById(entryId).get();
 
@@ -391,4 +410,12 @@ public class EntryServiceImpl implements EntryService {
         }
     }
 
+    private SortedEntryDto convertEntryToSortedEntryDto(Entry entry) {
+        Entry parent = entryRepository.getOne(entry.getParentEntry().getId());
+
+        SortedEntryDto result = new SortedEntryDto(entry.getTitle(), parent.getTitle(), entry.getDate(), entry.getDuration(),
+                entry.getDeadline(), entry.getEntryType(), entry.getEntryPhase(), entry.isClosed());
+
+       return result;
+    }
 }

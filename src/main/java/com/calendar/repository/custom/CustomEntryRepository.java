@@ -2,6 +2,7 @@ package com.calendar.repository.custom;
 
 import com.calendar.domain.Entry;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CustomEntryRepository {
@@ -13,5 +14,6 @@ public interface CustomEntryRepository {
 	List<Entry> getOrderedEntriesByUserId(int userId);
 	
 	void removeEntry(Entry entry);
-	
+
+	List<Entry> getSortedEntries(int userId, LocalDateTime startDate, LocalDateTime endDate);
 }

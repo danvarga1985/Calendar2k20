@@ -7,8 +7,12 @@ import com.calendar.responsedto.*;
 import com.calendar.service.impl.EntryServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 public class EntryController {
@@ -44,6 +48,16 @@ public class EntryController {
 	@GetMapping("/entry")
 	public EntryResponseDto getEntryById(@RequestParam int id) {
 		return entryServiceImpl.getEntryById(id);
+	}
+
+	@GetMapping("/periodsGroupedEntries")
+	public List<SortedEntryDto> getSortedEntries(@RequestParam String startDate,
+												 @RequestParam String endDate) {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm");
+		LocalDateTime start = LocalDateTime.parse(startDate, formatter);
+		LocalDateTime end = LocalDateTime.parse(endDate, formatter);
+		return entryServiceImpl.getSortedEntries(start, end);
+
 	}
 
 	@PostMapping("/entry")

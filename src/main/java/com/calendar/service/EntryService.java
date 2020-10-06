@@ -5,7 +5,9 @@ import com.calendar.requestdto.EntryForModificationDto;
 import com.calendar.requestdto.ProjectDto;
 import com.calendar.responsedto.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 public interface EntryService {
 
@@ -33,5 +35,6 @@ public interface EntryService {
 	
 	ProjectViewResponseDto getProjectView(Integer id);
 
+	List<SortedEntryDto> getSortedEntries(LocalDateTime startDate, LocalDateTime endDate);
 
 }
