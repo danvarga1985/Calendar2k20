@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 public class SortedEntryDto {
 
+    private int id;
     private String title;
 
     private String parentTitle;
@@ -31,8 +32,9 @@ public class SortedEntryDto {
 
     private boolean closed;
 
-    public SortedEntryDto(String title, String parentTitle, LocalDateTime startDate, LocalDateTime duration,
+    public SortedEntryDto(int id, String title, String parentTitle, LocalDateTime startDate, LocalDateTime duration,
                           LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase, boolean closed) {
+        this.id = id;
         this.title = title;
         this.parentTitle = parentTitle;
         this.startDate = startDate;
@@ -41,6 +43,14 @@ public class SortedEntryDto {
         this.entryType = entryType;
         this.entryPhase = entryPhase;
         this.closed = closed;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {

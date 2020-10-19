@@ -62,6 +62,7 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository {
     }
 
 //    //JPL implementation - sorting is done at DB-side -- couldn't make it work - TODO: FIGURE THIS OUT!!!
+//    //CHILDENTRIES CANNOT BE EXPRESSED DIRECTLY - NEED ANOTHER QUERY (select COUNT WHERE this.id = parentid FORM ENTRY)
 //    @Override
 //    public List<Entry> getSortedEntries(int userId, LocalDateTime startDate, LocalDateTime endDate) {
 //        String query = "SELECT e, CASE WHEN e.entryType = 'memo' THEN 1 " +
@@ -102,7 +103,7 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository {
                 .setParameter("ed", endDate)
                 .getResultList();
 
-        entries.sort(new EntrySortComparator().reversed());
+        entries.sort(new EntrySortComparator());
 
         return entries;
     }

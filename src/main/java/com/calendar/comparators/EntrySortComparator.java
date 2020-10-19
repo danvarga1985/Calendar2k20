@@ -4,105 +4,85 @@ import com.calendar.data.enums.EntryPhase;
 import com.calendar.data.enums.EntryType;
 import com.calendar.domain.Entry;
 
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 public class EntrySortComparator implements Comparator<Entry> {
 
+    /*
+    Sort order:
+    1:Memo
+    2:Event
+    3:Task - WIP
+    4:Task - UNSTARTED
+    5:Task - COMPLETED
+    6: Everything else
+    */
+
+    private final List<EntryType> entryTypeOrder = Arrays.asList(EntryType.MEMO, EntryType.EVENT, EntryType.TASK);
+    private final List<EntryPhase> taskPhaseOrder = Arrays.asList(EntryPhase.WIP, EntryPhase.UNSTARTED, EntryPhase.COMPLETED);
+
     @Override
     public int compare(Entry e1, Entry e2) {
-        /*
-        Sort order:
-        1:Memo
-        2:Event
-        3:Task - WIP
-        4:Task - UNSTARTED
-        5:Task - COMPLETED
-        6: Everything else
-        */
 
-        // If only one is MEMO, then float it above the other
-        if (e1.getEntryType() == EntryType.MEMO && e2.getEntryType() != EntryType.MEMO) {
-            return 1;
-        }
+        EntryType t1 = e1.getEntryType();
+        EntryType t2 = e2.getEntryType();
+        int indexOfT1 = entryTypeOrder.indexOf(t1);
+        int indexOfT2 = entryTypeOrder.indexOf(t2);
 
-        if (e2.getEntryType() == EntryType.MEMO && e1.getEntryType() != EntryType.MEMO) {
+        // If one Entry's EntryType is not in the entryTypeOrder list
+        // 'indexOf' returns with the index-number, or with -1 in case the the list doesn't contain the element
+        if (indexOfT1 == -1 && indexOfT2 != -1) {
             return -1;
-        }
-
-
-        // If both are MEMO, then sort by Date, if those are equal, then sort by Title
-        if (e1.getEntryType() == EntryType.MEMO && e2.getEntryType() == EntryType.MEMO) {
-            return compareByDateOrTitle(e1, e2);
-        }
-
-        //If only one is EVENT and the other is not EVENT/MEMO, then float it above the other
-        if (e1.getEntryType() == EntryType.EVENT && e2.getEntryType() != EntryType.EVENT) {
+        } else if (indexOfT1 != -1 && indexOfT2 == -1) {
             return 1;
-        }
-
-        if (e2.getEntryType() == EntryType.EVENT && e1.getEntryType() != EntryType.EVENT) {
-            return -1;
-        }
-
-        //If both are EVENT, then sort by Date, if those are equal, then sort by Title
-        if (e1.getEntryType() == EntryType.EVENT && e2.getEntryType() == EntryType.EVENT) {
+            //If neither Entry's entryType is in the entryTypeOrder list
+        } else if (indexOfT1 == -1) {
             return compareByDateOrTitle(e1, e2);
-        }
+        } else {
+            int compareTypeResult = indexOfT1 - indexOfT2;
 
-        // Every other scenario applies to every remaining EntryType (currently it's only TASK)
-        // If only one is WIP then float it abone the other
-        if (e1.getEntryPhase() == EntryPhase.WIP && e2.getEntryPhase() != EntryPhase.WIP ) {
-            return 1;
-        }
+            // If both Entry's type is in the entryTypeOrder list, and are not the same
+            if (compareTypeResult != 0) {
+                return compareTypeResult;
+            } else {
+                // If the two Entry has the same type, but aren't TASK
+                if (t1 != EntryType.TASK) {
+                    return compareByDateOrTitle(e1, e2);
+                    //If both Entry is TASK
+                } else {
+                    int indexOfP1 = taskPhaseOrder.indexOf(e1.getEntryPhase());
+                    int indexOfP2 = taskPhaseOrder.indexOf(e2.getEntryPhase());
 
-        if (e2.getEntryPhase() == EntryPhase.WIP && e1.getEntryPhase() != EntryPhase.WIP ) {
-            return -1;
-        }
+                    if (indexOfP1 == -1 && indexOfP2 == -1) {
+                        return compareByDateOrTitle(e1, e2);
+                    }
+                    if (indexOfP1 == -1) {
+                        return -1;
+                    }
 
-        // If both EntryPhase is WIP, then sort by Date, if those are equal, then sort by Title
-        if (e1.getEntryPhase() == EntryPhase.WIP && e2.getEntryPhase() == EntryPhase.WIP ) {
-            return compareByDateOrTitle(e1, e2);
-        }
+                    if (indexOfP2 == -1) {
+                        return 1;
+                    }
 
-        // If only one is UNSTARTED, then float it above the other
-        if (e1.getEntryPhase() == EntryPhase.UNSTARTED && e2.getEntryPhase() != EntryPhase.UNSTARTED) {
-            return 1;
-        }
+                    int comparePhaseResult = indexOfP1 - indexOfP2;
 
-        if (e2.getEntryPhase() == EntryPhase.UNSTARTED && e1.getEntryPhase() != EntryPhase.UNSTARTED) {
-            return -1;
-        }
-
-        // If both are UNSTARTED, then sort by Date, if those are equal, then sort by Title
-        if (e1.getEntryPhase() == EntryPhase.UNSTARTED && e2.getEntryPhase() == EntryPhase.UNSTARTED ) {
-            return compareByDateOrTitle(e1, e2);
-        }
-
-        // If only one is COMPLETED, then float it above the other
-        if (e1.getEntryPhase() == EntryPhase.COMPLETED && e2.getEntryPhase() != EntryPhase.COMPLETED) {
-            return 1;
-        }
-
-        if (e2.getEntryPhase() == EntryPhase.COMPLETED && e1.getEntryPhase() != EntryPhase.COMPLETED) {
-            return -1;
-        }
-
-        // If both are COMPLETED, then sort by Date, if those are equal, then sort by Title
-        if (e1.getEntryPhase() == EntryPhase.COMPLETED && e2.getEntryPhase() == EntryPhase.COMPLETED ) {
-            return compareByDateOrTitle(e1, e2);
-        }
-
-        // For everything else: sort by date
-        else {
-            return compareByDateOrTitle(e1, e2);
+                    if (comparePhaseResult == 0) {
+                        return compareByDateOrTitle(e1, e2);
+                    } else {
+                        return comparePhaseResult;
+                    }
+                }
+            }
         }
     }
 
     private int compareByDateOrTitle(Entry e1, Entry e2) {
         if (e1.getDate().isEqual(e2.getDate())) {
-            return e2.getTitle().compareTo(e1.getTitle());
+            return e1.getTitle().compareTo(e2.getTitle());
         } else {
-            return e2.getDate().compareTo(e1.getDate());
+            return e1.getDate().compareTo(e2.getDate());
         }
     }
 }
