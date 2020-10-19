@@ -370,19 +370,17 @@ public class EntryServiceImpl implements EntryService {
 
     @Override
     public List<SortedEntryDto> getSortedEntries(LocalDateTime startDate, LocalDateTime endDate) {
-        //TODO: impl
         int userId = userServiceImpl.getFullUser().getId();
 
         List<Entry> sortedEntries = customEntryRepository.getSortedEntries(userId, startDate, endDate);
 
-        List<SortedEntryDto> resultlist = new ArrayList<>();
+        List<SortedEntryDto> resultList = new ArrayList<>();
 
-        for (Entry e :
-                sortedEntries) {
-            resultlist.add(convertEntryToSortedEntryDto(e));
+        for (Entry e: sortedEntries) {
+            resultList.add(convertEntryToSortedEntryDto(e));
         }
 
-        return resultlist;
+        return resultList;
     }
 
     private int getProjectIdOfEntry(int entryId) {
@@ -413,9 +411,7 @@ public class EntryServiceImpl implements EntryService {
     private SortedEntryDto convertEntryToSortedEntryDto(Entry entry) {
         Entry parent = entryRepository.getOne(entry.getParentEntry().getId());
 
-        SortedEntryDto result = new SortedEntryDto(entry.getTitle(), parent.getTitle(), entry.getDate(), entry.getDuration(),
-                entry.getDeadline(), entry.getEntryType(), entry.getEntryPhase(), entry.isClosed());
-
-       return result;
+        return new SortedEntryDto(entry.getId(), entry.getTitle(), parent.getTitle(), entry.getDate(),
+                entry.getDuration(), entry.getDeadline(), entry.getEntryType(), entry.getEntryPhase(), entry.isClosed());
     }
 }
