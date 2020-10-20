@@ -1,6 +1,7 @@
 package com.calendar.repository.custom.impl;
 
 import com.calendar.comparators.EntrySortComparator;
+import com.calendar.data.enums.EntryType;
 import com.calendar.domain.Entry;
 import com.calendar.repository.custom.CustomEntryRepository;
 import org.springframework.stereotype.Repository;
@@ -14,9 +15,7 @@ import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 public class CustomEntryRepositoryImpl implements CustomEntryRepository {
@@ -25,34 +24,26 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository {
     EntityManager em;
 
     @Override
-    public List<Entry> getEntriesByUserId(int userId) {
+    public List<Entry> getAllProjects(int userId) {
         return em
-                .createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.child = :isC", Entry.class)
+                .createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.child = :child " +
+                                "AND e.entryType = :type ORDER BY e.title ASC ", Entry.class)
                 .setParameter("id", userId)
-                .setParameter("isC", false)
-                .getResultStream().sorted(new Comparator<Entry>() {
-                    @Override
-                    public int compare(Entry e1, Entry e2) {
-                        return e1.getTitle().compareToIgnoreCase(e2.getTitle());
-                    }
-                }).collect(Collectors.toList());
+                .setParameter("child", false)
+                .setParameter("type", EntryType.PROJECT)
+                .getResultList();
     }
 
     @Override
-    public List<Entry> getProjectsByUserIdAndStatus(int userId, boolean closed) {
+    public List<Entry> getActiveOrClosedProjects(int userId, boolean closed) {
         return em
-                .createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.child = :isC " +
-                        "AND e.closed = :isCl", Entry.class)
+                .createQuery("SELECT e FROM Entry e WHERE e.userId = :id AND e.child = :child " +
+                        "AND e.closed = :closed AND e.entryType = :type ORDER BY e.title ASC ", Entry.class)
                 .setParameter("id", userId)
-                .setParameter("isC", false)
-                .setParameter("isCl", closed)
-                .getResultStream().sorted(new Comparator<Entry>() {
-                    @Override
-                    public int compare(Entry e1, Entry e2) {
-                        return e1.getTitle().compareToIgnoreCase(e2.getTitle());
-                    }
-                }).collect(Collectors.toList());
-
+                .setParameter("child", false)
+                .setParameter("closed", closed)
+                .setParameter("type", EntryType.PROJECT)
+                .getResultList();
     }
 
     public void removeEntry(Entry entry) {
@@ -91,8 +82,8 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository {
     public List<Entry> getSortedEntries(int userId, LocalDateTime startDate, LocalDateTime endDate) {
         String query = "SELECT e FROM Entry e " +
                 "WHERE e.userId = :id " +
-                "AND e.entryType <> 'project' " +
-                "AND e.entryType <> 'parent' " +
+                "AND e.entryType <> :projectType " +
+                "AND e.entryType <> :parentType " +
                 "AND size(e.childEntries) < 1" +
                 "AND e.date >= :sd " +
                 "AND e.date <= :ed";
@@ -101,6 +92,8 @@ public class CustomEntryRepositoryImpl implements CustomEntryRepository {
                 .setParameter("id", userId)
                 .setParameter("sd", startDate)
                 .setParameter("ed", endDate)
+                .setParameter("projectType", EntryType.PROJECT)
+                .setParameter("parentType", EntryType.PARENT)
                 .getResultList();
 
         entries.sort(new EntrySortComparator());

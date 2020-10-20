@@ -3,6 +3,7 @@ package com.calendar.service;
 import com.calendar.requestdto.EntryDto;
 import com.calendar.requestdto.EntryForModificationDto;
 import com.calendar.requestdto.ProjectDto;
+import com.calendar.requestdto.SingleDto;
 import com.calendar.responsedto.*;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,8 @@ import java.util.List;
 public interface EntryService {
 
 	ProjectViewResponseDto createEntry(EntryDto entryDto);
+
+	SingleDto createSingle(SingleDto singleDto);
 	
 	ProjectViewResponseDto createProject(ProjectDto projectDto);
 	

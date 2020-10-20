@@ -7,11 +7,13 @@ import com.calendar.domain.Entry;
 import com.calendar.domain.User;
 import com.calendar.exceptions.ConstraintViolationException;
 import com.calendar.exceptions.EntryNotFoundException;
+import com.calendar.exceptions.InvalidEntryTypeException;
 import com.calendar.repository.EntryRepository;
 import com.calendar.repository.custom.CustomEntryRepository;
 import com.calendar.requestdto.EntryDto;
 import com.calendar.requestdto.EntryForModificationDto;
 import com.calendar.requestdto.ProjectDto;
+import com.calendar.requestdto.SingleDto;
 import com.calendar.responsedto.*;
 import com.calendar.service.EntryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +31,10 @@ import java.util.Optional;
 @Service
 public class EntryServiceImpl implements EntryService {
 
-    private EntryRepository entryRepository;
-    private CustomEntryRepository customEntryRepository;
-    private UserServiceImpl userServiceImpl;
-    private EntryDao entryDao;
+    private final EntryRepository entryRepository;
+    private final CustomEntryRepository customEntryRepository;
+    private final UserServiceImpl userServiceImpl;
+    private final EntryDao entryDao;
 
     @Autowired
     public EntryServiceImpl(EntryRepository entryRepository, UserServiceImpl userServiceImpl,
@@ -46,7 +48,7 @@ public class EntryServiceImpl implements EntryService {
     @Override
     @Transactional
     public ProjectViewResponseDto createProject(ProjectDto projectDto) {
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
 
         Entry entry = new Entry(projectDto.getTitle(), projectDto.getDescription(), null, null,
                 projectDto.getDeadline(),
@@ -54,8 +56,7 @@ public class EntryServiceImpl implements EntryService {
 
         entry.setUserId(user.getId());
 
-        int numberOfProjects = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false)
-                .size();
+        int numberOfProjects = customEntryRepository.getActiveOrClosedProjects(user.getId(), false).size();
         entry.setSortNumber(numberOfProjects);
 
         entryRepository.save(entry);
@@ -67,7 +68,7 @@ public class EntryServiceImpl implements EntryService {
     @Override
     @Transactional
     public ProjectViewResponseDto createEntry(EntryDto entryDto) {
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
 
         EntryType entryType;
         EntryPhase entryPhase;
@@ -112,10 +113,53 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
+    @Transactional
+    public SingleDto createSingle(SingleDto singleDto) {
+        User user = getCurrentUser();
+
+        EntryType entryType;
+        EntryPhase entryPhase;
+
+        if (singleDto.getEntryType() != null) {
+            if (singleDto.getEntryType().equals(EntryType.TASK.toString()) ||
+                    singleDto.getEntryType().equals(EntryType.EVENT.toString()) ||
+                    singleDto.getEntryType().equals(EntryType.MEMO.toString())) {
+                entryType = EntryType.valueOf(singleDto.getEntryType());
+            } else {
+                throw new InvalidEntryTypeException("EntryType can only be Task, Memo or Event!");
+            }
+        } else {
+            entryType = EntryType.TASK;
+        }
+
+        if (singleDto.getEntryPhase() != null) {
+            entryPhase = EntryPhase.valueOf(singleDto.getEntryPhase());
+        } else {
+            entryPhase = EntryPhase.NONRELEVANT;
+        }
+
+        Entry single = new Entry(
+                singleDto.getTitle(),
+                singleDto.getDescription(),
+                singleDto.getDate(),
+                singleDto.getDuration(),
+                singleDto.getDeadline(),
+                entryType,
+                entryPhase);
+
+        single.setUserId(user.getId());
+        Entry savedEntry = entryRepository.save(single);
+
+        return new SingleDto(savedEntry.getTitle(), savedEntry.getDescription(), savedEntry.getDate(),
+                savedEntry.getDuration(), savedEntry.getDeadline(), savedEntry.getEntryType().toString(),
+                savedEntry.getEntryPhase().toString());
+    }
+
+    @Override
     public EntryListResponseDto getEntries() {
         EntryListResponseDto entryResponseDto = new EntryListResponseDto();
 
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
         List<Entry> entryList = new ArrayList<Entry>();
         entryList = customEntryRepository.getOrderedEntriesByUserId(user.getId());
         entryResponseDto.setEntryList(entryList);
@@ -125,13 +169,13 @@ public class EntryServiceImpl implements EntryService {
 
     @Override
     public ArrayList<ProjectEntriesResponseDto> getProjects() {
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
         List<Entry> entryList = new ArrayList<Entry>();
 
         if (user.isOnlyActiveProjects()) {
-            entryList = customEntryRepository.getProjectsByUserIdAndStatus(user.getId(), false);
+            entryList = customEntryRepository.getActiveOrClosedProjects(user.getId(), false);
         } else {
-            entryList = customEntryRepository.getEntriesByUserId(user.getId());
+            entryList = customEntryRepository.getAllProjects(user.getId());
         }
 
         ArrayList<ProjectEntriesResponseDto> perDtoList = new ArrayList<ProjectEntriesResponseDto>();
@@ -159,7 +203,7 @@ public class EntryServiceImpl implements EntryService {
 
     @Override
     public ProjectViewResponseDto getProjectView(Integer id) {
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
 
         if (id != null) {
             return new ProjectViewResponseDto(getFullProjectById(getProjectIdOfEntry(id)),
@@ -173,7 +217,7 @@ public class EntryServiceImpl implements EntryService {
     public ProjectViewResponseForModificationDto getProjectViewWithChildrenClosedStatus(Integer id,
                                                                                         boolean hasOpenChildren,
                                                                                         Boolean allSiblingsAreClosed) {
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
 
         if (id != null) {
             if (hasOpenChildren) {
@@ -207,7 +251,7 @@ public class EntryServiceImpl implements EntryService {
                     e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), null);
         }
 
-        User user = userServiceImpl.getFullUser();
+        User user = getCurrentUser();
         if (user.getId() != erDto.getUserId()) {
             throw new AccessDeniedException("Access denied");
         }
@@ -296,7 +340,6 @@ public class EntryServiceImpl implements EntryService {
             entry.setExpanded(eDto.isExpanded().get());
         }
 
-
         entryRepository.save(entry);
 
         return getProjectViewWithChildrenClosedStatus(entry.getId(), checkIfAllChildrenAreClosed, areAllSiblingsClosed);
@@ -342,14 +385,6 @@ public class EntryServiceImpl implements EntryService {
         return getProjectView(id);
     }
 
-    private void checkUserToEntry(Entry e) {
-
-        User user = userServiceImpl.getFullUser();
-        if (user.getId() != e.getUserId()) {
-            throw new AccessDeniedException("Access denied");
-        }
-    }
-
     @Transactional
     @Override
     public void expandEntry(int id, boolean isExpanded) {
@@ -376,7 +411,7 @@ public class EntryServiceImpl implements EntryService {
 
         List<SortedEntryDto> resultList = new ArrayList<>();
 
-        for (Entry e: sortedEntries) {
+        for (Entry e : sortedEntries) {
             resultList.add(convertEntryToSortedEntryDto(e));
         }
 
@@ -409,9 +444,26 @@ public class EntryServiceImpl implements EntryService {
     }
 
     private SortedEntryDto convertEntryToSortedEntryDto(Entry entry) {
-        Entry parent = entryRepository.getOne(entry.getParentEntry().getId());
+        String parentTitle;
+        try {
+            parentTitle = entryRepository.getOne(entry.getParentEntry().getId()).getTitle();
+        } catch (NullPointerException e) {
+            parentTitle = null;
+        }
 
-        return new SortedEntryDto(entry.getId(), entry.getTitle(), parent.getTitle(), entry.getDate(),
+        return new SortedEntryDto(entry.getId(), entry.getTitle(), parentTitle, entry.getDate(),
                 entry.getDuration(), entry.getDeadline(), entry.getEntryType(), entry.getEntryPhase(), entry.isClosed());
     }
+
+    private User getCurrentUser() {
+        return userServiceImpl.getFullUser();
+    }
+
+    private void checkUserToEntry(Entry e) {
+        User user = getCurrentUser();
+        if (user.getId() != e.getUserId()) {
+            throw new AccessDeniedException("Access denied");
+        }
+    }
+
 }

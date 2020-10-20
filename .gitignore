@@ -74,3 +74,4 @@ pom.xml.tag
 src/main/resources/application-default.properties
 
 *.log
+logs/spring.log

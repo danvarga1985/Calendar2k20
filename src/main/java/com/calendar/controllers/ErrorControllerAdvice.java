@@ -1,9 +1,6 @@
 package com.calendar.controllers;
 
-import com.calendar.exceptions.ConstraintViolationException;
-import com.calendar.exceptions.EntryNotFoundException;
-import com.calendar.exceptions.SQLError;
-import com.calendar.exceptions.UserNotLoggedInException;
+import com.calendar.exceptions.*;
 import com.calendar.responsedto.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,4 +44,10 @@ public class ErrorControllerAdvice {
                 ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidEntryTypeException.class)
+    public ResponseEntity<ApiError> handleInvalidEntryType(InvalidEntryTypeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiError(
+                HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                ex.getMessage()));
+    }
 }
