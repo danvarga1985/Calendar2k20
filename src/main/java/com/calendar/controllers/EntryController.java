@@ -3,6 +3,7 @@ package com.calendar.controllers;
 import com.calendar.requestdto.EntryDto;
 import com.calendar.requestdto.EntryForModificationDto;
 import com.calendar.requestdto.ProjectDto;
+import com.calendar.requestdto.SingleDto;
 import com.calendar.responsedto.*;
 import com.calendar.service.impl.EntryServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,11 @@ public class EntryController {
 	@PostMapping("/project")
 	public ProjectViewResponseDto makeProjectEntry(@Valid @RequestBody ProjectDto projectDto) {
 		return entryServiceImpl.createProject(projectDto);
+	}
+
+	@PostMapping("/single")
+	public SingleDto makeProjectEntry(@Valid @RequestBody SingleDto singleDto) {
+		return entryServiceImpl.createSingle(singleDto);
 	}
 
 	@PutMapping("/entry")

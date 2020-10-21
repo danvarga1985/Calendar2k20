@@ -31,15 +31,15 @@ public class EntrySortComparator implements Comparator<Entry> {
         int indexOfT1 = entryTypeOrder.indexOf(t1);
         int indexOfT2 = entryTypeOrder.indexOf(t2);
 
-        // If one Entry's EntryType is not in the entryTypeOrder list
+        //If neither Entry's entryType is in the entryTypeOrder list
         // 'indexOf' returns with the index-number, or with -1 in case the the list doesn't contain the element
-        if (indexOfT1 == -1 && indexOfT2 != -1) {
-            return -1;
-        } else if (indexOfT1 != -1 && indexOfT2 == -1) {
-            return 1;
-            //If neither Entry's entryType is in the entryTypeOrder list
-        } else if (indexOfT1 == -1) {
+        if (indexOfT1 == -1 && indexOfT2 == -1) {
             return compareByDateOrTitle(e1, e2);
+            // If one Entry's EntryType is not in the entryTypeOrder list
+        } else if (indexOfT1 == -1) {
+            return 1;
+        } else if (indexOfT2 == -1) {
+            return -1;
         } else {
             int compareTypeResult = indexOfT1 - indexOfT2;
 
@@ -59,11 +59,11 @@ public class EntrySortComparator implements Comparator<Entry> {
                         return compareByDateOrTitle(e1, e2);
                     }
                     if (indexOfP1 == -1) {
-                        return -1;
+                        return 1;
                     }
 
                     if (indexOfP2 == -1) {
-                        return 1;
+                        return -1;
                     }
 
                     int comparePhaseResult = indexOfP1 - indexOfP2;
