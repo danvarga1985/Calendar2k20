@@ -239,16 +239,34 @@ public class EntryServiceImpl implements EntryService {
         Optional<Entry> entry = entryRepository.findById(id);
         Entry e = entry.get();
 
+        Integer projectId;
+        String projectTitle;
+
+        projectId = getProjectIdOfEntry(e.getId());
+        Entry project = entryRepository.findById(projectId).get();
+        projectTitle = project.getTitle();
+        /*
+         In case the entry is a Single (has no parent-Entry, has no child-Entry, and entryType is not 'Project'),
+         the projectId and the projectName has to be null.
+        */
+        if (e.getId() == projectId && e.getTitle().equals(projectTitle) && project.getEntryType() != EntryType.PROJECT) {
+            projectId = null;
+            projectTitle = null;
+        }
+
+
         EntryResponseDto erDto;
 
         try {
             erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
                     e.getDate(), e.getDuration(), e.getDeadline(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
-                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), e.getParentEntry().getId());
+                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), e.getParentEntry().getId(),
+                    projectId, projectTitle);
         } catch (NullPointerException ex) {
             erDto = new EntryResponseDto(e.getId(), e.getUserId(), e.getTitle(), e.getDescription(),
                     e.getDate(), e.getDuration(), e.getDeadline(), e.getEntryType(), e.getEntryPhase(), e.isChild(),
-                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), null);
+                    e.isClosed(), e.getSortNumber(), e.isDeleted(), e.isExpanded(), null, projectId,
+                    projectTitle);
         }
 
         User user = getCurrentUser();
