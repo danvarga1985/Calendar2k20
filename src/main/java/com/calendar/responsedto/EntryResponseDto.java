@@ -44,10 +44,15 @@ public class EntryResponseDto {
 	private boolean expanded;
 
 	private Integer parentId;
+
+	private Integer projectId;
+
+	private String projectTitle;
 	
-	public EntryResponseDto(int id, int userId, String title, String description, LocalDateTime date, LocalDateTime duration,
-							LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase, boolean child, boolean closed, Integer sortNumber,
-							boolean deleted, boolean expanded, Integer parentId) {
+	public EntryResponseDto(int id, int userId, String title, String description, LocalDateTime date,
+							LocalDateTime duration, LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase,
+							boolean child, boolean closed, Integer sortNumber, boolean deleted, boolean expanded,
+							Integer parentId, Integer projectId, String projectTitle) {
 		this.id = id;
 		this.userId = userId;
 		this.title = title;
@@ -63,6 +68,8 @@ public class EntryResponseDto {
 		this.deleted = deleted;
 		this.expanded = expanded;
 		this.parentId = parentId;
+		this.projectId = projectId;
+		this.projectTitle = projectTitle;
 	}
 	
 	public boolean isDeleted() {
@@ -183,5 +190,21 @@ public class EntryResponseDto {
 
 	public void setParentId(Integer parentId) {
 		this.parentId = parentId;
+	}
+
+	public Integer getProjectId() {
+		return projectId;
+	}
+
+	public void setProjectId(Integer projectId) {
+		this.projectId = projectId;
+	}
+
+	public String getProjectTitle() {
+		return projectTitle;
+	}
+
+	public void setProjectTitle(String projectTitle) {
+		this.projectTitle = projectTitle;
 	}
 }
