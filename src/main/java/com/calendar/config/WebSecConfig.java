@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -88,6 +87,14 @@ public class WebSecConfig extends WebSecurityConfigurerAdapter {
 				"http://plan-my-day-dev.firebaseapp.com",
 				"https://plan-my-day-dev.firebaseapp.com/login-registration",
 				"http://plan-my-day-dev.firebaseapp.com/login-registration",
+				"https://planmyday-dan-dev.web.app/",
+				"http://planmyday-dan-dev.web.app/",
+				"https://planmyday-dan-dev.web.app/login-registration",
+				"http://planmyday-dan-dev.web.app/login-registration",
+				"https://planmyday-dan-dev.firebaseapp.com",
+				"http://planmyday-dan-dev.firebaseapp.com",
+				"https://planmyday-dan-dev.firebaseapp.com/login-registration",
+				"http://planmyday-dan-dev.firebaseapp.com/login-registration",
         		"https://plan-my-day-mages-of-code.firebaseapp.com",
         		"http://plan-my-day-mages-of-code.firebaseapp.com",
         		"https://plan-my-day-mages-of-code.firebaseapp.com/login-registration",
