@@ -3,12 +3,14 @@ package com.calendar.responsedto;
 import com.calendar.data.enums.EntryPhase;
 import com.calendar.data.enums.EntryType;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class EntryResponseDto {
+public class EntryResponseDto  implements Serializable {
 
 	private int id;
 	
@@ -25,6 +27,7 @@ public class EntryResponseDto {
 	private LocalDateTime duration;
 
 	@JsonFormat(pattern = "yyyy-MM-dd@HH:mm")
+	@DateTimeFormat(pattern = "yyyy-MM-dd@HH:mm")
 	private LocalDateTime deadline;
 
 	@Enumerated(EnumType.STRING)
@@ -48,7 +51,10 @@ public class EntryResponseDto {
 	private Integer projectId;
 
 	private String projectTitle;
-	
+
+	public EntryResponseDto() {
+	}
+
 	public EntryResponseDto(int id, int userId, String title, String description, LocalDateTime date,
 							LocalDateTime duration, LocalDateTime deadline, EntryType entryType, EntryPhase entryPhase,
 							boolean child, boolean closed, Integer sortNumber, boolean deleted, boolean expanded,
